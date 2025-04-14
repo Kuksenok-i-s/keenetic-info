@@ -26,7 +26,11 @@ class FFMPEGController:
         if self.process:
             self.stop()
         cmd = self.build_command(profile)
-        self.process = subprocess.Popen(cmd, shell=True)
+        self.process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if self.process.poll() is not None:
+            logger.error(f"[FFMPEG] Ошибка запуска процесса: {self.process.stderr.read().decode()}")
+            return
+        logger.info(f"[FFMPEG] Процесс запущен с командой: {cmd}")
         self.current_profile = profile    
         logger.info(f"[FFMPEG] Процесс запущен с профилем: {profile}")
 
@@ -44,14 +48,13 @@ class FFMPEGController:
 
     def build_command(self, profile: dict[str, str]) -> str:
         if self.input_device == "testsrc":
-            logger.info(f"[FFMPEG] Building command for test source with resolution: {profile['resolution']}, fps: {self.fps}, bitrate: {self.bitrate}")
-            # Use test source for testing purposes remove ASAP
+            logger.info(f"[FFMPEG] Построение команды для тестового источника с разрешением: {profile['resolution']}, fps: {self.fps}, битрейтом: {self.bitrate}")
             return (
                 f"ffmpeg -f lavfi -i testsrc=rate={profile['fps']}:size={profile['resolution']} "
                 f"-vcodec libx264 -preset ultrafast -b:v {profile['bitrate']} -f mpegts {self.output}"
             )
         else:
-            logger.info(f"[FFMPEG] Building command for input device: {self.input_device} with resolution: {profile['resolution']}, fps: {profile['fps']}, bitrate: {profile['bitrate']}")
+            logger.info(f"[FFMPEG] Построение команды для устройства ввода: {self.input_device} с разрешением: {profile['resolution']}, частотой кадров: {profile['fps']}, битрейтом: {profile['bitrate']}")
             return (
                 f"ffmpeg -f v4l2 -framerate {profile['fps']} -video_size {profile['resolution']} "
                 f"-i {self.input_device} -b:v {profile['bitrate']} -f mpegts {self.output}"

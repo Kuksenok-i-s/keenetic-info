@@ -16,15 +16,32 @@ class SignalPolicyEngine:
         self.client = client
         self.ffmpeg = ffmpeg
         self.config = config
-        ## TODO: Убрать это в конфиг
-        self.profiles = [
-            {"resolution": "320x240", "bitrate": "600k",  "fps": "12"},
-            {"resolution": "640x480", "bitrate": "600k",  "fps": "15"},
-            {"resolution": "854x480", "bitrate": "1000k", "fps": "20"},
-            {"resolution": "1280x720", "bitrate": "2000k", "fps": "25"},
-            {"resolution": "1600x900", "bitrate": "3000k", "fps": "30"},
-            {"resolution": "1920x1080", "bitrate": "4500k", "fps": "30"},
-        ]
+
+        base_profile = {"resolution": config.resolution, "bitrate": config.bitrate, "fps": config.fps}
+        logger.info(f"[POLICY] Инициализация с базовым профилем: {base_profile}")
+        # Degradation steps
+        degradation_steps = config.degradation_steps
+        if degradation_steps < 1:
+            logger.error("[POLICY] Количество шагов деградации должно быть больше 0")
+            raise ValueError("Количество шагов деградации должно быть больше 0")
+
+        self.profiles = []
+        for step in range(degradation_steps + 1):
+            width, height = base_profile['resolution'].split('x')
+            width = int(width) - step * (int(width) // degradation_steps)
+            height = int(height) - step * (int(height) // degradation_steps)
+            if width <= 1:
+                width = 320
+            if height <= 1:
+                height = 240
+            resolution = f"{width}x{height}"
+            bitrate = f"{int(base_profile['bitrate'] * ((degradation_steps - step) / degradation_steps))}k"
+            if bitrate == "0k":
+                bitrate = "300k"
+            fps = str(base_profile['fps'] - step * 3 if base_profile['fps'] - step * 3 > 0 else 1)
+            if int(fps) < 10:
+                fps = "12"
+            self.profiles.append({"resolution": resolution, "bitrate": bitrate, "fps": fps})
 
         if not self.config.input_device:
             logger.info("[POLICY] Используется тестовый источник")
@@ -48,10 +65,8 @@ class SignalPolicyEngine:
             - Logs the SNR, RSSI, and noise values with a timestamp.
             - Selects a profile based on the SNR value:
                 - SNR < 5: Selects the first profile.
-                - 5 <= SNR < 10: Selects the second profile.
-                - 10 <= SNR < 20: Selects the third profile.
-                - 20 <= SNR < 30: Selects the fourth profile.
-                - 30 <= SNR < 40: Selects the fifth profile.
+                - 5 <= SNR < 10: Selects the worst profile.
+                - 30 <= SNR < 40: Selects the best profile.
                 - SNR >= 40: Selects the sixth profile.
             - Logs the selected profile's resolution, bitrate, and frame rate.
             - Restarts the ffmpeg process with the selected profile if needed.
@@ -64,7 +79,7 @@ class SignalPolicyEngine:
         snr = rssi - noise
 
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        logger.info(f"[{ts}] SNR: {snr}, RSSI: {rssi}, NOISE: {noise}")
+        logger.info(f"[SIGNAL INFO] SNR: {snr}, RSSI: {rssi}, NOISE: {noise}")
 
         if snr < 5:
             profile = self.profiles[0]

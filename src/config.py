@@ -24,6 +24,8 @@ class Config:
         self.resolution = profile["resolution"]
         self.bitrate = profile["bitrate"]
         self.fps = profile["fps"]
+        self.degradation_steps = int(profile.get("degradation_steps", 5))
+        # FFMPEG settings
         self.input_device = profile.get("input", "testsrc")
         self.output = profile.get("output", "udp://127.0.0.1:1234")
         # ConnCheck settings

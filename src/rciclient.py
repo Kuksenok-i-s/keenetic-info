@@ -17,9 +17,9 @@ class KeeneticRCIClient:
         self.password = config.password
         self.timeout = config.timeout
         self.logfile = config.logfile
-        logger_text.info(f"[Keenetic] Initialized with timeout: {self.timeout} and logfile: {self.logfile}")
-        logger_text.info("[Keenetic] Configuration loaded successfully.")
-        logger_text.info("[Keenetic] Initializing session...")
+        logger_text.info(f"[Keenetic] Инициализация сессии с таймаутом: {self.timeout} и файлом журнала: {self.logfile}")
+        logger_text.info("[Keenetic] Конфигурация загружена успешно.")
+        logger_text.info("[Keenetic] Инициализация сессии...")
 
 
     def _request(self, path, post=None):
@@ -35,16 +35,16 @@ class KeeneticRCIClient:
             sha256 = hashlib.sha256((challenge + md5).encode()).hexdigest()
             r = self._request("auth", {"login": self.login, "password": sha256})
             if r.status_code == 200:
-                logger_text.info("[Keenetic] Authentication successful")
+                logger_text.info("[Keenetic] Аутентификация успешна")
                 return True
             else:
-                logger_text.error(f"[Keenetic] Authentication failed: {r.status_code}")
+                logger_text.error(f"[Keenetic] Ошибка аутентификации: {r.status_code}")
                 return False
         elif r.status_code == 200:
-            logger_text.info("[Keenetic] Already authenticated")
+            logger_text.info("[Keenetic] Уже авторизован")
             return True
         else:
-            logger_text.error(f"[Keenetic] Authentication failed: {r.status_code}")
+            logger_text.error(f"[Keenetic] Ошибка аутентификации: {r.status_code}")
         return False
 
 
@@ -68,7 +68,7 @@ class KeeneticRCIClient:
             return None
         wifi_info = data.get("WifiMaster0/WifiStation0")
         if not wifi_info:
-            logger_text.error("[Keenetic] No Wi-Fi information available.")
+            logger_text.error("[Keenetic] Информация о Wi-Fi не найдена")
             return None
         return wifi_info
 

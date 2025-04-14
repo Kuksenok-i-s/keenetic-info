@@ -27,8 +27,8 @@ class ConnectionChecker:
         try:
             self.ip_address = ip_address(self.ip_address)
         except AddressValueError:
-            logger.error(f"Invalid IP address: {self.ip_address}")
-            raise ValueError("Invalid IP address")
+            logger.error(f"Некорректный IP адрес: {self.ip_address}")
+            raise ValueError("Некорректный IP адрес")
     
     def check_ping(self):
         try:
@@ -38,12 +38,12 @@ class ConnectionChecker:
                                    stderr=subprocess.PIPE)
             return result.returncode == 0
         except Exception as e:
-            logger.error(f"Ping check failed: {e}")
+            logger.error(f"Проверка ping не удалась: {e}")
             return False
     
     def check_curl(self) -> bool:
         if not self.url:
-            logger.error("URL is not provided for curl check")
+            logger.error("Некорректный URL для проверки curl")
             return False
         try:
             cmd = f"curl -s -I --connect-timeout 3 {self.url}"
@@ -61,7 +61,7 @@ class ConnectionChecker:
                         return 200 <= status_code < 400
             return False
         except Exception as e:
-            logger.error(f"Curl check failed: {e}")
+            logger.error(f"Проверка curl не удалась: {e}")
             return False
     
     def check_all(self) -> dict[str, bool]:

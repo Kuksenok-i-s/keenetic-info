@@ -13,7 +13,7 @@ class LogType(Enum):
 
 
 class CsvSignalLogHandler(logging.Handler):
-    def __init__(self, filename="signal_log.csv") -> None:
+    def __init__(self, filename: str = None) -> None:
         super().__init__()
         self.filename = filename
         self._init_file()
@@ -55,17 +55,14 @@ class CsvSignalLogHandler(logging.Handler):
 ## TODO: А нужно ли это?
 
 class GenericTextLogHandler(logging.Handler):
-    def __init__(self, filename="generic_text_log.csv") -> None:
+    def __init__(self, filename="generic.csv") -> None:
         super().__init__()
         self.filename = filename
         self._init_file()
 
     def _init_file(self) -> None:
-        new_file = not os.path.exists(self.filename)
         self.file = open(self.filename, "a", newline="")
         self.writer = csv.writer(self.file)
-        if new_file:
-            self.writer.writerow(["timestamp", "message"])
 
     def emit(self, record: logging.LogRecord) -> None:
         """
@@ -86,7 +83,7 @@ class GenericTextLogHandler(logging.Handler):
 
 
 
-def get_logger(name, level=logging.INFO, filename="signal_log.csv", logType:LogType = None, handler: callable = None) -> logging.Logger:
+def get_logger(name, level=logging.INFO, filename="main_log.csv", logType:LogType = None, handler: callable = None) -> logging.Logger:
     """
     Get a logger with a CSV handler and console handler.
     Args:

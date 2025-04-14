@@ -18,15 +18,15 @@ def check_init_connection(config: Config = None):
         connection_check = ConnectionChecker(config)
         connection = connection_check.check_all()
         if connection:
-            logger.info("[CONNECTION CHECKER] Initial connection check passed.")
+            logger.info("[CONNECTION CHECKER] Начальные проверки соединения прошли успешно.")
         else:
-            logger.error("[CONNECTION CHECKER] Initial connection check failed.")
+            logger.error("[CONNECTION CHECKER] Ошибка при начальной проверке соединения.")
     except Exception as e:
-        logger.error(f"[CONNECTION CHECKER] Error during initial connection check: {e}")
+        logger.error(f"[CONNECTION CHECKER] Ошибка во время начальной проверки соединения: {e}")
 
 
 def graceful_shutdown(signum, frame):
-    logger.info("[MAIN] Graceful shutdown initiated.")
+    logger.info("[MAIN] Инициирована остановка.")
     sys.exit(0)
 
 if __name__ == "__main__":
@@ -39,14 +39,14 @@ if __name__ == "__main__":
         check_init_connection(config)
         ffmpeg = FFMPEGController(config)
         policy = SignalPolicyEngine(client, ffmpeg, config)
-        logger.info("[MAIN] Starting signal evaluation loop.")
+        logger.info("[MAIN] Старт цикла обработки сигналов.")
         while True:
             signal_info = client.get_signal_info()
             if signal_info:
                 policy.evaluate_and_apply(signal_info)
             else:
-                logger.error("[SIGNAL POLICY] Failed to get signal information.")
+                logger.error("[SIGNAL POLICY] Не удалось получить информацию о качестве соединения.")
                 break
-            time.sleep(config.timeout)
+            time.sleep(int(config.timeout))
     else:
-        logger.error("[MAIN] Authentication failed. Exiting.")
+        logger.error("[MAIN] Аутентификация не удалась. Завершение работы.")
