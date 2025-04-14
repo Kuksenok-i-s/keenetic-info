@@ -10,6 +10,7 @@ import time
 from src.logger import get_logger
 import signal
 import sys
+
 logger = get_logger(__name__, logType=LogType.BOTH, handler=GenericTextLogHandler)
 
 
@@ -28,6 +29,7 @@ def check_init_connection(config: Config = None):
 def graceful_shutdown(signum, frame):
     logger.info("[MAIN] Инициирована остановка.")
     sys.exit(0)
+
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, graceful_shutdown)

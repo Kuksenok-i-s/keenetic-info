@@ -12,8 +12,6 @@ import csv
 from datetime import datetime
 
 
-
-
 class CsvSignalLogHandler(logging.Handler):
     def __init__(self, filename="keenetic_signal_log.csv"):
         super().__init__()
@@ -31,14 +29,9 @@ class CsvSignalLogHandler(logging.Handler):
         try:
             ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             data = record.msg
-            self.writer.writerow([
-                ts,
-                data.get("ssid"),
-                data.get("rssi"),
-                data.get("noise"),
-                data.get("rate"),
-                data.get("quality")
-            ])
+            self.writer.writerow(
+                [ts, data.get("ssid"), data.get("rssi"), data.get("noise"), data.get("rate"), data.get("quality")]
+            )
             self.file.flush()
         except Exception as e:
             self.handleError(record)
@@ -83,6 +76,7 @@ class KeeneticRCIClient:
             return None
         return data.get("WifiMaster0/WifiStation0")
 
+
 class WifiSignalLogger:
     def __init__(self, keenetic_client, logger=None):
         self.client = keenetic_client
@@ -106,13 +100,7 @@ class WifiSignalLogger:
         ssid = info.get("ssid")
         quality = self.rssi_to_quality(rssi)
 
-        log_data = {
-            "ssid": ssid,
-            "rssi": rssi,
-            "noise": noise,
-            "rate": rate,
-            "quality": quality
-        }
+        log_data = {"ssid": ssid, "rssi": rssi, "noise": noise, "rate": rate, "quality": quality}
         if not quality:
             quality = 0
         if not rssi:
@@ -123,6 +111,7 @@ class WifiSignalLogger:
 
         if self.logger:
             self.logger.info(log_data)
+
 
 if __name__ == "__main__":
     client = KeeneticRCIClient()
@@ -135,6 +124,6 @@ if __name__ == "__main__":
         while True:
             signal_logger.log()
             time.sleep(1)
-       
+
     else:
         print("❌ Авторизация не удалась")

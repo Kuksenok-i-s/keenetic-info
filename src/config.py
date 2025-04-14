@@ -1,6 +1,7 @@
 import configparser
 from dataclasses import dataclass
 
+
 @dataclass
 class Config:
     def __init__(self, config_path="main.conf"):

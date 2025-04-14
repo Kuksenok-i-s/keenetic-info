@@ -34,14 +34,9 @@ class CsvSignalLogHandler(logging.Handler):
         try:
             ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             data = record.msg
-            self.writer.writerow([
-                ts,
-                data.get("ssid"),
-                data.get("rssi"),
-                data.get("noise"),
-                data.get("rate"),
-                data.get("quality")
-            ])
+            self.writer.writerow(
+                [ts, data.get("ssid"), data.get("rssi"), data.get("noise"), data.get("rate"), data.get("quality")]
+            )
             self.file.flush()
         except Exception as e:
             self.handleError(record)
@@ -51,8 +46,8 @@ class CsvSignalLogHandler(logging.Handler):
         super().close()
 
 
-
 ## TODO: А нужно ли это?
+
 
 class GenericTextLogHandler(logging.Handler):
     def __init__(self, filename="generic.csv") -> None:
@@ -82,8 +77,9 @@ class GenericTextLogHandler(logging.Handler):
         super().close()
 
 
-
-def get_logger(name, level=logging.INFO, filename="main_log.csv", logType:LogType = None, handler: callable = None) -> logging.Logger:
+def get_logger(
+    name, level=logging.INFO, filename="main_log.csv", logType: LogType = None, handler: callable = None
+) -> logging.Logger:
     """
     Get a logger with a CSV handler and console handler.
     Args:

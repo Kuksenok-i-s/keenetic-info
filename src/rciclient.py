@@ -9,6 +9,7 @@ from .logger import GenericTextLogHandler
 
 logger_text = get_logger(__name__, logType=LogType.FILE, handler=GenericTextLogHandler)
 
+
 class KeeneticRCIClient:
     def __init__(self, config: Config):
         self.session = requests.session()
@@ -17,10 +18,11 @@ class KeeneticRCIClient:
         self.password = config.password
         self.timeout = config.timeout
         self.logfile = config.logfile
-        logger_text.info(f"[Keenetic] Инициализация сессии с таймаутом: {self.timeout} и файлом журнала: {self.logfile}")
+        logger_text.info(
+            f"[Keenetic] Инициализация сессии с таймаутом: {self.timeout} и файлом журнала: {self.logfile}"
+        )
         logger_text.info("[Keenetic] Конфигурация загружена успешно.")
         logger_text.info("[Keenetic] Инициализация сессии...")
-
 
     def _request(self, path, post=None):
         url = f"http://{self.ip}/{path}"
@@ -47,13 +49,12 @@ class KeeneticRCIClient:
             logger_text.error(f"[Keenetic] Ошибка аутентификации: {r.status_code}")
         return False
 
-
     def get_signal_info(self):
         if self.get_device_type() == "wifi":
             return self.get_wifi_info()
         elif self.get_device_type() == "usb_modem":
             return self.get_usb_info()
-    
+
     def get_usb_info(self):
         pass
 
@@ -71,5 +72,3 @@ class KeeneticRCIClient:
             logger_text.error("[Keenetic] Информация о Wi-Fi не найдена")
             return None
         return wifi_info
-
-

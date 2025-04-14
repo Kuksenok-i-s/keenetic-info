@@ -27,7 +27,7 @@ class SignalPolicyEngine:
 
         self.profiles = []
         for step in range(degradation_steps + 1):
-            width, height = base_profile['resolution'].split('x')
+            width, height = base_profile["resolution"].split("x")
             width = int(width) - step * (int(width) // degradation_steps)
             height = int(height) - step * (int(height) // degradation_steps)
             if width <= 1:
@@ -38,7 +38,7 @@ class SignalPolicyEngine:
             bitrate = f"{int(base_profile['bitrate'] * ((degradation_steps - step) / degradation_steps))}k"
             if bitrate == "0k":
                 bitrate = "300k"
-            fps = str(base_profile['fps'] - step * 3 if base_profile['fps'] - step * 3 > 0 else 1)
+            fps = str(base_profile["fps"] - step * 3 if base_profile["fps"] - step * 3 > 0 else 1)
             if int(fps) < 10:
                 fps = "12"
             self.profiles.append({"resolution": resolution, "bitrate": bitrate, "fps": fps})
