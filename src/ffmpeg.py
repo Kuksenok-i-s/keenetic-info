@@ -6,7 +6,7 @@ from .logger import get_logger
 from .logger import LogType
 from .logger import GenericTextLogHandler
 
-logger = get_logger(__name__, logType=LogType.FILE, handler=GenericTextLogHandler)
+logger = get_logger(__name__, filename="ffmpeg_log.csv", logType=LogType.BOTH, handler=GenericTextLogHandler)
 
 
 class FFMPEGController:

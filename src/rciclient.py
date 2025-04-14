@@ -7,8 +7,8 @@ from .logger import get_logger
 from .logger import LogType
 from .logger import GenericTextLogHandler
 
-logger_text = get_logger(__name__, logType=LogType.FILE, handler=GenericTextLogHandler)
 
+logger_text = get_logger(__name__, filename="RCI_log.csv", logType=LogType.FILE, handler=GenericTextLogHandler)
 
 class KeeneticRCIClient:
     def __init__(self, config: Config):

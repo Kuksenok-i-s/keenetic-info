@@ -8,7 +8,7 @@ from .logger import GenericTextLogHandler
 from .logger import get_logger
 
 
-logger = get_logger(__name__, logType=LogType.FILE, handler=GenericTextLogHandler)
+logger = get_logger(__name__, filename="signalpolicy_log.csv", logType=LogType.FILE, handler=GenericTextLogHandler)
 
 
 class SignalPolicyEngine:
@@ -35,10 +35,10 @@ class SignalPolicyEngine:
             if height <= 1:
                 height = 240
             resolution = f"{width}x{height}"
-            bitrate = f"{int(base_profile['bitrate'] * ((degradation_steps - step) / degradation_steps))}k"
-            if bitrate == "0k":
+            bitrate = f"{int(int(base_profile['bitrate'].split('k')[0]) * ((degradation_steps - step) / degradation_steps))}k"
+            if int(bitrate.split('k')[0]) < 300:
                 bitrate = "300k"
-            fps = str(base_profile["fps"] - step * 3 if base_profile["fps"] - step * 3 > 0 else 1)
+            fps = str(int(base_profile["fps"]) - step * 3 if int(base_profile["fps"]) - step * 3 > 0 else 1)
             if int(fps) < 10:
                 fps = "12"
             self.profiles.append({"resolution": resolution, "bitrate": bitrate, "fps": fps})
@@ -77,22 +77,12 @@ class SignalPolicyEngine:
         rssi = int(signal_data.get("rssi", -100))
         noise = int(signal_data.get("noise", -100))
         snr = rssi - noise
-
-        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         logger.info(f"[SIGNAL INFO] SNR: {snr}, RSSI: {rssi}, NOISE: {noise}")
 
-        if snr < 5:
-            profile = self.profiles[0]
-        elif snr < 10:
-            profile = self.profiles[1]
-        elif snr < 20:
-            profile = self.profiles[2]
-        elif snr < 30:
-            profile = self.profiles[3]
-        elif snr < 40:
-            profile = self.profiles[4]
-        else:
-            profile = self.profiles[5]
 
-        logger.info(f"[POLICY] Выбран профиль: {profile['resolution']} @ {profile['bitrate']} {profile['fps']}fps")
+        degradation_steps = self.config.degradation_steps
+        effective_snr = max(snr, 0)
+        profile_index = degradation_steps - (effective_snr // 10)
+        profile_index = max(0, min(degradation_steps, profile_index))
+        profile = self.profiles[profile_index]
         self.ffmpeg.restart_if_needed(profile)

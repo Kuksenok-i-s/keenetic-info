@@ -11,7 +11,7 @@ from src.logger import get_logger
 import signal
 import sys
 
-logger = get_logger(__name__, logType=LogType.BOTH, handler=GenericTextLogHandler)
+logger = get_logger(__name__, filename="main.csv", logType=LogType.BOTH, handler=GenericTextLogHandler)
 
 
 def check_init_connection(config: Config = None):

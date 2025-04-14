@@ -29,8 +29,6 @@ class CsvSignalLogHandler(logging.Handler):
         """
         Именно тут мы и пишем в файл
         """
-        if not hasattr(record, "msg"):
-            return
         try:
             ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             data = record.msg
@@ -42,7 +40,6 @@ class CsvSignalLogHandler(logging.Handler):
             self.handleError(record)
 
     def close(self) -> None:
-        self.file.close()
         super().close()
 
 
@@ -50,9 +47,9 @@ class CsvSignalLogHandler(logging.Handler):
 
 
 class GenericTextLogHandler(logging.Handler):
-    def __init__(self, filename="generic.csv") -> None:
+    def __init__(self, filename: str = None) -> None:
         super().__init__()
-        self.filename = filename
+        self.filename = filename if filename is not None else "generic.csv"
         self._init_file()
 
     def _init_file(self) -> None:
@@ -73,12 +70,11 @@ class GenericTextLogHandler(logging.Handler):
             self.handleError(record)
 
     def close(self) -> None:
-        self.file.close()
         super().close()
 
 
 def get_logger(
-    name, level=logging.INFO, filename="main_log.csv", logType: LogType = None, handler: callable = None
+    name, level=logging.INFO, filename: str = None, logType: LogType = None, handler: callable = None
 ) -> logging.Logger:
     """
     Get a logger with a CSV handler and console handler.

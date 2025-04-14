@@ -7,7 +7,7 @@ from .logger import get_logger
 from .logger import LogType
 from .logger import GenericTextLogHandler
 
-logger = get_logger(__name__, logType=LogType.FILE, handler=GenericTextLogHandler)
+logger = get_logger(__name__, logType=LogType.CONSOLE, handler=GenericTextLogHandler)
 
 from ipaddress import AddressValueError, ip_address
 
