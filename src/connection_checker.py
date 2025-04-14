@@ -3,8 +3,6 @@ import shlex
 
 from .config import Config
 
-from logging import getLogger
-logger = getLogger(__name__)
 from .logger import get_logger
 from .logger import LogType
 from .logger import GenericTextLogHandler
