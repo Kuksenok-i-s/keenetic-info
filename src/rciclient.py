@@ -10,6 +10,7 @@ from .logger import GenericTextLogHandler
 
 logger_text = get_logger(__name__, filename="RCI_log.csv", logType=LogType.FILE, handler=GenericTextLogHandler)
 
+
 class KeeneticRCIClient:
     def __init__(self, config: Config):
         self.session = requests.session()
@@ -18,6 +19,8 @@ class KeeneticRCIClient:
         self.password = config.password
         self.timeout = config.timeout
         self.logfile = config.logfile
+        self.degradation_steps = config.degradation_steps
+
         logger_text.info(
             f"[Keenetic] Инициализация сессии с таймаутом: {self.timeout} и файлом журнала: {self.logfile}"
         )
@@ -49,26 +52,68 @@ class KeeneticRCIClient:
             logger_text.error(f"[Keenetic] Ошибка аутентификации: {r.status_code}")
         return False
 
-    def get_signal_info(self):
-        if self.get_device_type() == "wifi":
-            return self.get_wifi_info()
-        elif self.get_device_type() == "usb_modem":
-            return self.get_usb_info()
+    @staticmethod
+    def find_used_connection(data) -> str:
+        active = ""
+        priority = 0
 
-    def get_usb_info(self):
-        pass
+        def recurse(node):
+            nonlocal active, priority
+            if isinstance(node, dict):
+                if node.get("connected", "") == "yes" or node.get("status", "") == "connected":
+                    if node.get("priority", 0) > priority:
+                        active = node.get("id")
+                        priority = node.get("priority", 0)
+                for v in node.values():
+                    recurse(v)
+            elif isinstance(node, list):
+                for item in node:
+                    recurse(item)
 
-    def get_device_type(self) -> str:
-        return "wifi"
+        recurse(data)
+        return active
 
-    def get_wifi_info(self):
-        r = self._request("rci/show/interface")
-        try:
-            data = r.json()
-        except:
-            return None
-        wifi_info = data.get("WifiMaster0/WifiStation0")
-        if not wifi_info:
-            logger_text.error("[Keenetic] Информация о Wi-Fi не найдена")
-            return None
-        return wifi_info
+
+    def get_connection_info(self):
+        data: dict = self._request("rci/show/interface").json()
+        connection = self.find_used_connection(data)
+        if "WifiStation" == data.get(connection).get("type"):
+            return self.calculate_wifi_quality(data.get(connection))
+        return self.calculate_4g_signal_quality(data.get(connection))
+
+
+    @staticmethod
+    def level_from_score(score, max_score=100, levels=5):
+        step = max_score // levels
+        level = min(levels, max(0, (max_score - score) // step))
+        return level
+
+
+    def calculate_4g_signal_quality(self, connection: dict):
+        rssi = float(connection["rssi"])
+        rsrp = float(connection["rsrp"])
+        cinr = float(connection["cinr"])
+        def normalize(value, min_val, max_val):
+            return max(0, min(1, (value - min_val) / (max_val - min_val)))
+
+        rssi_norm = normalize(rssi, -80, -50)
+        rsrp_norm = normalize(rsrp, -120, -85)
+        cinr_norm = normalize(cinr, 0, 20)
+        score = round(rssi_norm * 30 + rsrp_norm * 40 + cinr_norm * 30)
+        return {"score": score, "level": self.level_from_score(score, 100, self.degradation_steps)}
+
+    def calculate_wifi_quality(self, connection: dict = None):
+        rssi = float(connection["rssi"])
+        noise = float(connection["noise"])
+        mcs = float(connection["mcs"]) 
+        nss = float(connection["nss"])
+        def normalize(value, min_val, max_val):
+            return max(0, min(1, (value - min_val) / (max_val - min_val)))
+
+        snr = rssi - noise
+        snr_norm = normalize(snr, 0, 50)
+        mcs_norm = normalize(mcs, 0, 11)
+        nss_norm = normalize(nss, 1, 4)
+        score = round(snr_norm * 50 + mcs_norm * 30 + nss_norm * 20)
+        return {"score": score, "level": self.level_from_score(score, 100, self.degradation_steps)}
+

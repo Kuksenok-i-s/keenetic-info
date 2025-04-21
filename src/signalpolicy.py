@@ -1,6 +1,5 @@
 from .rciclient import KeeneticRCIClient
 from .ffmpeg import FFMPEGController
-from datetime import datetime
 
 from .config import Config
 from .logger import LogType
@@ -12,8 +11,7 @@ logger = get_logger(__name__, filename="signalpolicy_log.csv", logType=LogType.F
 
 
 class SignalPolicyEngine:
-    def __init__(self, client: KeeneticRCIClient, ffmpeg: FFMPEGController, config: Config):
-        self.client = client
+    def __init__(self, ffmpeg: FFMPEGController, config: Config):
         self.ffmpeg = ffmpeg
         self.config = config
 
@@ -50,39 +48,6 @@ class SignalPolicyEngine:
             logger.info(f"[POLICY] Используется устройство ввода: {self.config.input_device}")
         logger.info(f"[POLICY] Инициализация завершена с профилями: {self.profiles}")
 
-    def evaluate_and_apply(self, signal_data: dict):
-        """
-        Evaluates the signal-to-noise ratio (SNR) based on the provided signal data
-        and applies the appropriate profile settings.
-
-        Args:
-            signal_data (dict): A dictionary containing signal information. Expected keys:
-                - "rssi" (int): Received Signal Strength Indicator. Defaults to -100 if not provided.
-                - "noise" (int): Noise level. Defaults to -100 if not provided.
-
-        Behavior:
-            - Calculates the SNR as the difference between RSSI and noise.
-            - Logs the SNR, RSSI, and noise values with a timestamp.
-            - Selects a profile based on the SNR value:
-                - SNR < 5: Selects the first profile.
-                - 5 <= SNR < 10: Selects the worst profile.
-                - 30 <= SNR < 40: Selects the best profile.
-                - SNR >= 40: Selects the sixth profile.
-            - Logs the selected profile's resolution, bitrate, and frame rate.
-            - Restarts the ffmpeg process with the selected profile if needed.
-
-        Returns:
-            None
-        """
-        rssi = int(signal_data.get("rssi", -100))
-        noise = int(signal_data.get("noise", -100))
-        snr = rssi - noise
-        logger.info(f"[SIGNAL INFO] SNR: {snr}, RSSI: {rssi}, NOISE: {noise}")
-
-
-        degradation_steps = self.config.degradation_steps
-        effective_snr = max(snr, 0)
-        profile_index = degradation_steps - (effective_snr // 10)
-        profile_index = max(0, min(degradation_steps, profile_index))
-        profile = self.profiles[profile_index]
+    def evaluate_and_apply(self, signal_level: int= None):
+        profile = self.profiles[signal_level.get("level")]
         self.ffmpeg.restart_if_needed(profile)

@@ -40,12 +40,12 @@ if __name__ == "__main__":
     if client.authenticate():
         check_init_connection(config)
         ffmpeg = FFMPEGController(config)
-        policy = SignalPolicyEngine(client, ffmpeg, config)
+        policy = SignalPolicyEngine(ffmpeg, config)
         logger.info("[MAIN] Старт цикла обработки сигналов.")
         while True:
-            signal_info = client.get_signal_info()
-            if signal_info:
-                policy.evaluate_and_apply(signal_info)
+            signal_level = client.get_connection_info()
+            if signal_level:
+                policy.evaluate_and_apply(signal_level)
             else:
                 logger.error("[SIGNAL POLICY] Не удалось получить информацию о качестве соединения.")
                 break
